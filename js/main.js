@@ -272,13 +272,13 @@ handlePermission = () => {
 		name: 'geolocation'
 	}).then(function (result) {
 		if (result.state == 'granted') {
-			console.log(result.state);
+			// console.log(result.state);
 			if (navigator.geolocation) {
 				navigator.geolocation.getCurrentPosition(setCurrentCoordinates, error);
 			} else
 				alert("Geolocation is not supported by this browser. Couldn't get your location.");
 		} else if (result.state == 'prompt') {
-			console.log(result.state);
+			// console.log(result.state);
 			if (navigator.geolocation) {
 				navigator.geolocation.getCurrentPosition(setCurrentCoordinates, error);
 			} else
@@ -287,7 +287,7 @@ handlePermission = () => {
 			alert("Please allow location permission from the browser settings!")
 		}
 		result.onchange = () => {
-			console.log(result.state);
+			// console.log(result.state);
 		}
 	});
 }
