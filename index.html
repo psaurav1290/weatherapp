@@ -2,7 +2,7 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width = device-width, initial-scale = 1">
     <title>WeatherApp</title>
@@ -97,7 +97,7 @@
 
                 <!-- The expanding image container -->
                 <div class="batch-card forecast-card col-xl-10 offset-xl-1 col-lg-10 offset-lg-1 col-md-12 col-sm-12">
-                    <span class="close-icon" onclick="this.parentElement.style.display='none';setupAnimation();this.parentElement.parentElement.querySelector('.batch-cell-selected').classList.toggle('batch-cell-selected')" class="closebtn">&times;</span>
+                    <span class="close-icon" onclick="this.parentElement.style.display='none';this.parentElement.parentElement.querySelector('.batch-cell-selected').classList.toggle('batch-cell-selected')" class="closebtn">&times;</span>
                     <div class="display-card">
                         <div class="display-image">
                             <div class="display-image-date"></div>
@@ -163,7 +163,7 @@
 
                 <!-- The expanding image container -->
                 <div class="batch-card past-card col-xl-10 offset-xl-1 col-lg-10 offset-lg-1 col-md-12 col-sm-12">
-                    <span class="close-icon" onclick="this.parentElement.style.display='none';setupAnimation();this.parentElement.parentElement.querySelector('.batch-cell-selected').classList.toggle('batch-cell-selected')" class="closebtn">&times;</span>
+                    <span class="close-icon" onclick="this.parentElement.style.display='none';this.parentElement.parentElement.querySelector('.batch-cell-selected').classList.toggle('batch-cell-selected')" class="closebtn">&times;</span>
                     <div class="display-card">
                         <div class="display-image">
                             <div class="display-image-date"></div>
@@ -202,9 +202,8 @@
                 </div>
             </div>
         </div>
-
-
     </div>
+    
     <script src="lib/jquery.min.js"></script>
     <script src="lib/Bootstrap/js/bootstrap.min.js"></script>
     <script src="js/main.js"></script>

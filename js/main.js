@@ -1,79 +1,10 @@
-function setTransform(el, transform) {
-	el.style.transform = transform
-	el.style.WebkitTransform = transform
-}
-
-var current = 0
-var target = 0
-var ease = 0.075
-var rafId = undefined
-var rafActive = false
-var container = document.querySelector("#scroll-container")
-var windowWidth, containerHeight, headerHeight
-var fakeScroll
-
-function updateAnimation() {
-	var diff = target - current
-	var delta = Math.abs(diff) < 0.1 ? 0 : diff * ease
-
-	if (delta > 0.2 && target > headerHeight / 4) {
-		document.querySelector(".navbar").style.transform = "translateY(-100%)"
-	} else if (delta < 0) {
-		document.querySelector(".navbar").style.transform = "translateY(0)"
-	}
-
-	if (delta) {
-		current += delta
-		current = parseFloat(current.toFixed(2))
-		setTransform(container, "translateY(" + -current + "px)")
-		rafId = requestAnimationFrame(updateAnimation)
-	} else {
-		current = target
-		setTransform(container, "translateY(" + -current + "px)")
-		rafActive = false
-		cancelAnimationFrame(rafId)
-	}
-}
-
-function startAnimation() {
-	if (!rafActive) {
-		rafActive = true
-		rafId = requestAnimationFrame(updateAnimation)
-	}
-}
-
-function setupAnimation() {
-	windowWidth = window.innerWidth
-	containerHeight = container.getBoundingClientRect().height
-	fakeScroll.style.height = containerHeight + "px"
-	startAnimation()
-}
-
-function updateScroll() {
-	target = window.scrollY || window.pageYOffset
-	startAnimation()
-}
-
-window.addEventListener("scroll", updateScroll)
-window.addEventListener("resize", setupAnimation)
-
-layoutElements = () => {
-	headerHeight = document.querySelector(".navbar").offsetHeight.toFixed(2)
-	container = document.querySelector("#scroll-container")
-	container.style.padding = `${headerHeight}px 0px 0px 0px`
-	fakeScroll = document.createElement("div")
-	fakeScroll.className = "fake-scroll"
-	document.body.appendChild(fakeScroll)
-	setupAnimation()
-}
-
-
-
-
-var currentCoordinates = {},
+var container = document.querySelector("#scroll-container"),
+	navbar = document.querySelector(".navbar"),
+	headerHeight,
+	lastScrollTop = 0,
+	currentCoordinates = {},
 	globalCoordinates = {},
 	info = {},
-	currentCoordinatesObtained = false,
 	currentCoordinatesCalculating = false,
 	textField = document.querySelector("#place-textfield"),
 	nowCard = document.querySelector(".now-card"),
@@ -83,25 +14,21 @@ var currentCoordinates = {},
 	batchCellsPast = document.querySelector(".batch-cells-past"),
 	batchCell = document.querySelector("#batch-weather-container").querySelectorAll(".batch-cell")
 
-
-
 reflectInformationCard = (card, day) => {
 	var infoFields = "weather description temperature humidity wind".split(" ")
 	for (var i in infoFields) {
 		card.querySelector(`.${infoFields[i]}-cell`).textContent = info[day][infoFields[i]]
 	}
 	card.querySelector(".display-image").style.backgroundImage = `url(img/weather-wall/${info[day].icon}.png)`
-	card.querySelector(".display-image-date").textContent = "(" + info[day].time.toString().split(" GMT")[0].replace(" ", ") ", 1)
-	var placeWords = info.place.trim().split(/[^\d\w,]+/);
-	console.log(placeWords)
-	placeWords.forEach(x => x[0].toUpperCase())
-	console.log(placeWords)
-	placeWords = placeWords.join(" ")
-	console.log(placeWords)
-	card.querySelector(".display-image-place").textContent = placeWords
+	reflectTime = new Date(info[day].time.getTime() + info.timezone)
+	card.querySelector(".display-image-date").textContent = "(" + reflectTime.toUTCString().split(" GMT")[0].replace(", ", ") ", 1)
+	// let placeWords = info.place.trim().split(/[^\d\w,]+/);
+	// placeWords.forEach(x => x[0].toUpperCase())
+	// placeWords = placeWords.join(" ")
+	card.querySelector(".display-image-place").innerHTML = info.place
 }
 reflectBatchContainer = (container, day, index) => {
-	container.querySelectorAll(".week-day")[index].textContent = info[day].time.toString().split(" ")[0]
+	container.querySelectorAll(".week-day")[index].textContent = info[day].time.toUTCString().split(", ")[0]
 	container.querySelectorAll(".week-image")[index].style.backgroundImage = `url(img/weather-icon/${info[day].icon}@4x.png)`
 }
 
@@ -113,39 +40,7 @@ batchCell.forEach(cell => cell.addEventListener("click", (self) => {
 		batchCellSelected.classList.toggle("batch-cell-selected")
 	self.target.parentElement.classList.toggle("batch-cell-selected")
 	card.style.display = "block"
-	setupAnimation()
 }, true))
-
-setCurrentCoordinates = (location) => {
-	currentCoordinates["lat"] = location.coords.latitude
-	currentCoordinates["lng"] = location.coords.longitude
-	currentCoordinatesObtained = true
-}
-
-getLocation = () => {
-	if (navigator.geolocation) {
-		navigator.geolocation.getCurrentPosition(setCurrentCoordinates)
-		var counter = 0
-
-		var invokeCurrentWeather = setInterval(() => {
-			if (currentCoordinatesObtained) {
-				clearInterval(invokeCurrentWeather)
-				currentCoordinatesCalculating = true
-				getWeatherInfo()
-			}
-			if (counter == 99) {
-				clearInterval(invokeCurrentWeather)
-				textField.value = "New Delhi, India"
-				getWeatherInfo()
-			}
-			counter++
-		}, 100)
-	} else {
-		alert("Geolocation is not supported by this browser. Couldn't get your location.");
-		textField.value = "New Delhi, India"
-		getWeatherInfo()
-	}
-}
 
 textField.addEventListener('keypress', function (event) {
 	if (event.keyCode == 13) {
@@ -203,7 +98,7 @@ getWeatherInfo = () => {
 		return response.json();
 	}).then(data => {
 		if (currentCoordinatesCalculating) {
-			info["place"] = "Your Location"
+			info["place"] = "Your Location <span style='font-size:0.7rem;display:block;'>*Accuracy of location depends on your Internet Service provider</span>"
 			globalCoordinates = currentCoordinates
 			// console.log("Current Coordinates calculating - ", currentCoordinates)
 		} else {
@@ -225,13 +120,14 @@ getWeatherInfo = () => {
 			return response.json();
 		}).then(data => {
 			// console.log("Now data = ", data)
+			info["timezone"] = data.timezone * 1000
 			info[0] = storeInfo(data.main.temp, data.main.humidity, data.wind.speed, data.weather[0].main, data.weather[0].description, data.weather[0].icon, now);
 			document.querySelector(".background-blur").style.backgroundImage = `url(img/weather-wall/${info[0].icon}.png)`
 			reflectInformationCard(nowCard, 0)
 			// console.log("Now info = ", info["0"])
 		}).catch((errorMessage) => {
 			// console.log("Now error generated")
-			alert(errorMessage)
+			// alert(errorMessage)
 		});
 	}).then((forecastInfo) => {
 		var forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${globalCoordinates.lat}&lon=${globalCoordinates.lng}&appid=${weaThrottle}&units=metric`;
@@ -250,7 +146,7 @@ getWeatherInfo = () => {
 			}
 		}).catch((errorMessage) => {
 			// console.log("Forecast error generated")
-			alert(errorMessage)
+			// alert(errorMessage)
 		})
 	}).then((pastInfo1) => {
 		nowTime -= 86400
@@ -267,7 +163,7 @@ getWeatherInfo = () => {
 			// console.log("Past 1 info = ", info["-1"])
 		}).catch((errorMessage) => {
 			// console.log("Past 1 error generated")
-			alert(errorMessage)
+			// alert(errorMessage)
 		});
 	}).then((pastInfo2) => {
 		nowTime -= 86400
@@ -284,7 +180,7 @@ getWeatherInfo = () => {
 			// console.log("Past 2 info = ", info["-2"])
 		}).catch((errorMessage) => {
 			// console.log("Past 2 error generated")
-			alert(errorMessage)
+			// alert(errorMessage)
 		});
 	}).then((pastInfo3) => {
 		nowTime -= 86400
@@ -301,7 +197,7 @@ getWeatherInfo = () => {
 			// console.log("Past 3 info = ", info["-3"])
 		}).catch((errorMessage) => {
 			// console.log("Past 3 error generated")
-			alert(errorMessage)
+			// alert(errorMessage)
 		});
 	}).then((pastInfo4) => {
 		nowTime -= 86400
@@ -318,7 +214,7 @@ getWeatherInfo = () => {
 			// console.log("Past 4 info = ", info["-4"])
 		}).catch((errorMessage) => {
 			// console.log("Past 4 error generated")
-			alert(errorMessage)
+			// alert(errorMessage)
 		});
 	}).then((pastInfo5) => {
 		nowTime -= 86400
@@ -335,18 +231,98 @@ getWeatherInfo = () => {
 			// console.log("Past 5 info = ", info["-5"])
 		}).catch((errorMessage) => {
 			// console.log("Past 5 error generated")
-			alert(errorMessage)
+			// alert(errorMessage)
 		});
 	}).catch((errorMessage) => {
 		alert(errorMessage)
 	}).finally(() => {
 		currentCoordinatesCalculating = false
-		document.querySelectorAll(".batch-card").forEach(element => element.style.display = "none")
-		setupAnimation()
 	})
 }
 
+// calculateOnceComplete = (func) => {
+// 	var counter = 0
+// 	var runAfter = setInterval(() => {
+// 		let sizeOfInfo = Object.keys(info).length;
+// 		if (sizeOfInfo == 13 || counter == 99) {
+// 			clearInterval(runAfter)
+// console.log("Size of Info = ", sizeOfInfo)
+// 			func()
+// 		}
+// 		counter++
+// 	}, 100)
+// }
+
+function error(err) {
+	console.log(`Warning(${err.code}): ${err.message}`);
+	textField.value = "New Delhi, Delhi, India"
+	getWeatherInfo()
+}
+
+setCurrentCoordinates = (location) => {
+	currentCoordinates["lat"] = location.coords.latitude
+	currentCoordinates["lng"] = location.coords.longitude
+	currentCoordinatesCalculating = true
+	textField.value = "My Location"
+	getWeatherInfo()
+}
+
+handlePermission = () => {
+	navigator.permissions.query({
+		name: 'geolocation'
+	}).then(function (result) {
+		if (result.state == 'granted') {
+			console.log(result.state);
+			if (navigator.geolocation) {
+				navigator.geolocation.getCurrentPosition(setCurrentCoordinates, error);
+			} else
+				alert("Geolocation is not supported by this browser. Couldn't get your location.");
+		} else if (result.state == 'prompt') {
+			console.log(result.state);
+			if (navigator.geolocation) {
+				navigator.geolocation.getCurrentPosition(setCurrentCoordinates, error);
+			} else
+				alert("Geolocation is not supported by this browser. Couldn't get your location.");
+		} else if (result.state == 'denied') {
+			alert("Please allow location permission from the browser settings!")
+		}
+		result.onchange = () => {
+			console.log(result.state);
+		}
+	});
+}
+
+showHideHeader = () => {
+	var currentScrollTop = container.scrollTop
+	if (currentScrollTop > lastScrollTop && currentScrollTop > headerHeight / 4) {
+		navbar.style.transform = "translateY(-100%)"
+	} else {
+		navbar.style.transform = "translateY(0)"
+	}
+	lastScrollTop = currentScrollTop <= 0 ? 0 : currentScrollTop
+}
+
+container.addEventListener("scroll", showHideHeader)
+
+hideScrollbar = () => {
+	let offsetWidth = document.querySelector("#scroll-container").offsetWidth
+	let clientWidth = document.querySelector("#scroll-container").clientWidth
+	document.documentElement.style.setProperty("--scrollbarWidth", `${offsetWidth - clientWidth + 10}px`)
+}
+
+orientContent = () => {
+	headerHeight = document.querySelector(".navbar").offsetHeight
+	container = document.querySelector("#scroll-container")
+	container.style.paddingTop = `${headerHeight}px`
+}
+
+window.addEventListener("resize", () => {
+	hideScrollbar()
+	orientContent()
+})
+
 window.onload = () => {
-	layoutElements()
-	getLocation()
+	hideScrollbar()
+	orientContent()
+	handlePermission();
 }

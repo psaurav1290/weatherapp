@@ -1,15 +1,29 @@
 :root {
     --background: rgb(0, 102, 185);
+    --scrollbarWidth: 0px;
 }
 
-body {}
+body {
+    margin: 0;
+    overflow: hidden;
+}
+
+#scroll-container {
+    position: absolute;
+    left: 0px;
+    right: calc(-1 * var(--scrollbarWidth));
+    top: 0;
+    bottom: 0;
+    padding-right: var(--scrollbarWidth);
+    overflow-y: auto;
+}
 
 .background-blur {
     position: fixed;
     top: 0;
     left: 0;
-    height: 100vh;
-    width: 100vw;
+    right: 0;
+    bottom: 0;
     background-image: url(../img/weather-wall/50d.png);
     background-position: center;
     background-size: cover;
@@ -18,23 +32,6 @@ body {}
     filter: blur(8px);
     -webkit-filter: blur(8px);
     z-index: -10;
-}
-
-#scroll-container {
-    /* display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-gap: 0 10%;
-    justify-items: end; */
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-}
-
-.fake-scroll {
-    position: absolute;
-    top: 0;
-    width: 1px;
 }
 
 .rowflex {
@@ -71,7 +68,7 @@ body {}
     background-repeat: no-repeat;
     text-align: center;
     color: white;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9);
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 1);
 }
 
 .display-info {
