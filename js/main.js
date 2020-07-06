@@ -49,16 +49,16 @@ textField.addEventListener('keypress', function (event) {
 	}
 });
 
+dmsToDeg = (deg = 0, min = 0, sec = 0, ms = 0, dir = "N") => {
+	let deci = (deg / 1 + min / 60 + sec / 3600 + ms / 216000)
+	if (dir == "W" || dir == "S")
+		return -1 * deci
+	return deci
+}
+
 getWeatherInfo = () => {
 	var weaThrottle = "7065de1505e424f29d33baf26a38155b",
 		geoThrottle = "7c7dbb02adcb4ff0b8c8588c25b8e793";
-
-	dmsToDeg = (deg = 0, min = 0, sec = 0, ms = 0, dir = "N") => {
-		let deci = (deg / 1 + min / 60 + sec / 3600 + ms / 216000)
-		if (dir == "W" || dir == "S")
-			return -1 * deci
-		return deci
-	}
 
 	storeInfo = (temp, humidity, speed, main, description, icon, time) => {
 		return {
@@ -102,13 +102,20 @@ getWeatherInfo = () => {
 			globalCoordinates = currentCoordinates
 			// console.log("Current Coordinates calculating - ", currentCoordinates)
 		} else {
+			// console.log(data)
 			info["place"] = inputPlace
-			if (!data.total_results)
-				throw new Error("No such place")
+			if (data.status.code == 200) {
+				if (data.total_results) {
+					globalCoordinates["lat"] = dmsToDeg(...data.results[0].annotations.DMS.lat.split(/[^\d\w]+/)).toFixed(3);
+					globalCoordinates["lng"] = dmsToDeg(...data.results[0].annotations.DMS.lng.split(/[^\d\w]+/)).toFixed(3);
+				} else
+					throw new Error("No such place")
+			} else if (data.status.code == 402)
+				throw new Error("Invalid input format. Try separating the address with commas ',' .")
 			else if (data.status.code == 402)
 				throw new Error("Daily Quota Exceeded")
-			globalCoordinates["lat"] = dmsToDeg(...data.results[0].annotations.DMS.lat.split(/[^\d\w]+/)).toFixed(3);
-			globalCoordinates["lng"] = dmsToDeg(...data.results[0].annotations.DMS.lng.split(/[^\d\w]+/)).toFixed(3);
+			else
+				throw new Error(`Status code - ${data.status.code}: ${data.status.message}`)
 			// console.log("Entered Coordinates calculating - ", globalCoordinates)
 		}
 	}).then((nowInfo) => {
@@ -119,7 +126,7 @@ getWeatherInfo = () => {
 		fetchPromiseNow.then(response => {
 			return response.json();
 		}).then(data => {
-			// console.log("Now data = ", data)
+			console.log("Now data = ", data)
 			info["timezone"] = data.timezone * 1000
 			info[0] = storeInfo(data.main.temp, data.main.humidity, data.wind.speed, data.weather[0].main, data.weather[0].description, data.weather[0].icon, now);
 			document.querySelector(".background-blur").style.backgroundImage = `url(img/weather-wall/${info[0].icon}.png)`
@@ -254,9 +261,10 @@ getWeatherInfo = () => {
 // }
 
 function error(err) {
-	console.log(`Warning(${err.code}): ${err.message}`);
+	// console.log(`Warning(${err.code}): ${err.message}`);
 	textField.value = "New Delhi, Delhi, India"
 	getWeatherInfo()
+	alert("Please allow location permission from the browser settings!")
 }
 
 setCurrentCoordinates = (location) => {

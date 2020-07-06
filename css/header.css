@@ -22,9 +22,13 @@
     color: white;
 }
 
-.navbar-brand:hover {
+.navbar-brand:hover span {
     color: white;
     text-shadow: white 0 0 0.5rem;
+}
+
+.navbar-brand:hover #top-logo-shadow {
+    opacity: 0.6;
 }
 
 @media (max-width: 470px) {
@@ -40,11 +44,28 @@
     min-width: 2.8rem;
     max-width: 4rem;
     margin: 0.25rem 0 0.25rem 0.25rem;
+    animation: changeHue 6s linear infinite;
+}
+
+@keyframes changeHue {
+    from {
+        filter: hue-rotate(0deg);
+    }
+
+    to {
+        filter: hue-rotate(360deg);
+    }
+}
+
+#top-logo-shadow {
+    opacity: 0.2;
+    transition-duration: 0.1s;
 }
 
 .navbar-brand-text {
     font-size: 2rem;
     display: inline;
+    transition-duration: 0.1s;
 }
 
 @media (max-width: 678px) {
