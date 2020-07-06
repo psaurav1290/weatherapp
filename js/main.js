@@ -22,9 +22,6 @@ reflectInformationCard = (card, day) => {
 	card.querySelector(".display-image").style.backgroundImage = `url(img/weather-wall/${info[day].icon}.png)`
 	reflectTime = new Date(info[day].time.getTime() + info.timezone)
 	card.querySelector(".display-image-date").textContent = "(" + reflectTime.toUTCString().split(" GMT")[0].replace(", ", ") ", 1)
-	// let placeWords = info.place.trim().split(/[^\d\w,]+/);
-	// placeWords.forEach(x => x[0].toUpperCase())
-	// placeWords = placeWords.join(" ")
 	card.querySelector(".display-image-place").innerHTML = info.place
 }
 reflectBatchContainer = (container, day, index) => {
@@ -126,7 +123,7 @@ getWeatherInfo = () => {
 		fetchPromiseNow.then(response => {
 			return response.json();
 		}).then(data => {
-			console.log("Now data = ", data)
+			// console.log("Now data = ", data)
 			info["timezone"] = data.timezone * 1000
 			info[0] = storeInfo(data.main.temp, data.main.humidity, data.wind.speed, data.weather[0].main, data.weather[0].description, data.weather[0].icon, now);
 			document.querySelector(".background-blur").style.backgroundImage = `url(img/weather-wall/${info[0].icon}.png)`
